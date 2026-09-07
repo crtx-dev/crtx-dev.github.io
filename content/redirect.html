@@ -1,0 +1,25 @@
+<main class="redirect-page" data-cortex-launcher>
+  <section class="redirect-card" aria-labelledby="redirect-title">
+    <p class="eyebrow">MY CORTEX</p>
+    <h1 id="redirect-title">Open your local Cortex.</h1>
+    <p class="redirect-lede">This page remembers the local port used by Cortex in this browser and opens your local installation.</p>
+
+    <div class="redirect-error" data-redirect-error role="alert" hidden></div>
+
+    <form class="redirect-form" data-redirect-form novalidate>
+      <label for="cortex-local-port">Local Cortex port</label>
+      <div class="redirect-port-row">
+        <span>http://localhost:</span>
+        <input id="cortex-local-port" name="port" type="number" min="1" max="65535" step="1" inputmode="numeric" autocomplete="off" value="7331" aria-describedby="redirect-port-help">
+      </div>
+      <p id="redirect-port-help" class="redirect-help">Use the port configured for your local Cortex service. The default is <code>7331</code>.</p>
+      <div class="redirect-actions">
+        <button class="primary" type="submit">Save and open Cortex</button>
+        <button class="secondary" type="button" data-reset-port>Use default port</button>
+      </div>
+    </form>
+
+    <p class="redirect-status" data-redirect-status>Preparing Cortex…</p>
+    <p class="redirect-note">Your port preference is stored only in this browser. No Cortex configuration or credentials are sent to crtx.dev.</p>
+  </section>
+</main>
