@@ -123,101 +123,61 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
 });
 
-const CORTEX_LOCAL_PORT_KEY='cortex-local-port';
-const CORTEX_DEFAULT_PORT=7331;
-
-function cortexValidLocalPort(value){
-  const text=String(value??'').trim();
-  if(!/^\d+$/.test(text))return null;
-  const port=Number(text);
-  return Number.isInteger(port)&&port>=1&&port<=65535?port:null;
-}
-
-function cortexLauncherQuery(search){
-  const raw=String(search||'').replace(/^\?/,'');
-  if(!raw)return {mode:'launch'};
-  if(raw==='config'||raw.startsWith('config&'))return {mode:'config'};
-
-  const params=new URLSearchParams(raw);
-  if(params.has('config'))return {mode:'config'};
-  if(params.has('port'))return {mode:'port',value:params.get('port')};
-  if(params.has('portno'))return {mode:'port',value:params.get('portno')};
-
-  // Also support the compact documented form: /redirect?8123
-  if(!raw.includes('=')&&!raw.includes('&'))return {mode:'port',value:raw};
-  return {mode:'invalid',value:raw};
-}
-
-function cortexOpenLocal(port){
-  window.location.replace(`http://localhost:${port}/`);
-}
-
-function cortexInitLauncher(){
-  const root=document.querySelector('[data-cortex-launcher]');
-  if(!root)return;
-
-  const form=root.querySelector('[data-redirect-form]');
-  const input=form?.querySelector('input[name="port"]');
-  const error=root.querySelector('[data-redirect-error]');
-  const status=root.querySelector('[data-redirect-status]');
-  const reset=root.querySelector('[data-reset-port]');
-  const query=cortexLauncherQuery(window.location.search);
-
-  const showError=message=>{
-    root.classList.add('redirect-config-mode');
-    if(error){error.textContent=message;error.hidden=false}
-    if(input){input.focus();input.select()}
-  };
-  const configuredPort=()=>{
-    try{return cortexValidLocalPort(localStorage.getItem(CORTEX_LOCAL_PORT_KEY))}
-    catch{return null}
-  };
-  const savePort=port=>{
-    try{localStorage.setItem(CORTEX_LOCAL_PORT_KEY,String(port));return true}
-    catch{return false}
-  };
-
-  if(query.mode==='launch'){
-    const port=configuredPort()||CORTEX_DEFAULT_PORT;
-    if(input)input.value=String(port);
-    if(status)status.textContent=`Opening Cortex on localhost:${port}…`;
-    cortexOpenLocal(port);
-    return;
+// Local app redirect launcher
+(()=>{
+  function validPort(value){
+    const text=String(value??'').trim();
+    if(!/^\d+$/.test(text))return null;
+    const port=Number(text);
+    return Number.isInteger(port)&&port>=1&&port<=65535?port:null;
   }
-
-  root.classList.add('redirect-config-mode');
-  const stored=configuredPort();
-  if(input)input.value=String(stored||CORTEX_DEFAULT_PORT);
-
-  if(query.mode==='port'){
-    const port=cortexValidLocalPort(query.value);
-    if(!port){
-      showError('That is not a valid TCP port. Enter a whole number from 1 to 65535.');
-    }else{
-      savePort(port);
-      if(status)status.textContent=`Saved port ${port}. Opening Cortex…`;
-      cortexOpenLocal(port);
+  function queryMode(search){
+    const raw=String(search||'').replace(/^\?/,'');
+    if(!raw)return 'launch';
+    const params=new URLSearchParams(raw);
+    return raw==='config'||params.has('config')?'config':'invalid';
+  }
+  function init(){
+    const root=document.querySelector('[data-local-launcher]');
+    if(!root)return;
+    const product=root.dataset.product;
+    const defaultPort=validPort(root.dataset.defaultPort);
+    const key=`${product}-local-port`;
+    const form=root.querySelector('[data-redirect-form]');
+    const input=form?.querySelector('input[name="port"]');
+    const error=root.querySelector('[data-redirect-error]');
+    const status=root.querySelector('[data-redirect-status]');
+    const reset=root.querySelector('[data-reset-port]');
+    const mode=queryMode(window.location.search);
+    const read=()=>{try{return validPort(localStorage.getItem(key))}catch{return null}};
+    const save=port=>{try{localStorage.setItem(key,String(port));return true}catch{return false}};
+    const open=port=>window.location.replace(`http://localhost:${port}/`);
+    const showError=message=>{root.classList.add('redirect-config-mode');if(error){error.textContent=message;error.hidden=false}if(input){input.focus();input.select()}};
+    const stored=read();
+    if(mode==='launch'){
+      const port=stored||defaultPort;
+      if(input)input.value=String(port);
+      if(status)status.textContent=`Opening ${product} on localhost:${port}…`;
+      open(port);
       return;
     }
-  }else if(query.mode==='invalid'){
-    showError('The redirect parameters were not recognised. Configure the local Cortex port below.');
+    root.classList.add('redirect-config-mode');
+    if(input)input.value=String(stored||defaultPort);
+    if(mode==='invalid')showError('The redirect parameters were not recognised. Use the configuration page to change the local port.');
+    form?.addEventListener('submit',event=>{
+      event.preventDefault();
+      const port=validPort(input?.value);
+      if(!port){showError('That is not a valid TCP port. Enter a whole number from 1 to 65535.');return}
+      if(error)error.hidden=true;
+      save(port);
+      open(port);
+    });
+    reset?.addEventListener('click',()=>{
+      if(input)input.value=String(defaultPort);
+      try{localStorage.removeItem(key)}catch{}
+      if(error)error.hidden=true;
+      input?.focus();
+    });
   }
-
-  form?.addEventListener('submit',event=>{
-    event.preventDefault();
-    const port=cortexValidLocalPort(input?.value);
-    if(!port){showError('That is not a valid TCP port. Enter a whole number from 1 to 65535.');return}
-    if(error)error.hidden=true;
-    savePort(port);
-    cortexOpenLocal(port);
-  });
-
-  reset?.addEventListener('click',()=>{
-    if(input)input.value=String(CORTEX_DEFAULT_PORT);
-    try{localStorage.removeItem(CORTEX_LOCAL_PORT_KEY)}catch{}
-    if(error)error.hidden=true;
-    input?.focus();
-  });
-}
-
-document.addEventListener('DOMContentLoaded',cortexInitLauncher);
+  document.addEventListener('DOMContentLoaded',init);
+})();
