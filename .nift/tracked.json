@@ -82,11 +82,6 @@
       "title": "update",
       "content-ext": ".sh",
       "output-ext": ".sh"
-    },
-    {
-      "name": "redirect",
-      "title": "Open Cortex",
-      "template": "templates/template.html"
     }
   ]
 }
