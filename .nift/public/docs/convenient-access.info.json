@@ -1,9 +1,9 @@
 {
-  "name": "docs/security",
-  "title": "security",
+  "name": "docs/convenient-access",
+  "title": "Convenient access",
   "template": "templates/template.html",
-  "content": "content/docs/security.html",
-  "output": "public/docs/security.html",
+  "content": "content/docs/convenient-access.html",
+  "output": "public/docs/convenient-access.html",
   "minify": false,
   "minify-version": 0,
   "pagination": false,
@@ -12,7 +12,7 @@
   "pagination-separator": "",
   "pagination-pages": 0,
   "dependencies": [
-    "content/docs/security.html",
+    "content/docs/convenient-access.html",
     "templates/docs-nav.html",
     "templates/head.html",
     "templates/nav.html",
